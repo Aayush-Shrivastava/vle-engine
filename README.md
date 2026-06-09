@@ -224,4 +224,4 @@ MIT License. Free to use, modify, and distribute with attribution.
 **Aayush Shrivastava**
 Chemical Engineering, BIT Mesra, Ranchi
 [LinkedIn](http://linkedin.com/in/aayush-shrivastava-a5568b346)
-[GitHub](https://github.com/Aayush-Shrivastava/vle-engine)
+[GitHub](https://github.com/Aayush-Shrivastava/vle-engine/tree/master)
