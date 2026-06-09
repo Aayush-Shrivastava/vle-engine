@@ -28,7 +28,7 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
                 F0 += z[i] * (K[i] - 1)
                 F1 += z[i] * (K[i] - 1) / K[i]
 
-            if F0 < 0:
+            if F0 < 0 and F1 < 0:
                 beta = 0.0
                 x = z[:]
                 y = [K[i] * x[i] for i in range(len(z))]
@@ -49,7 +49,7 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
                         "dew_pressure_units": pa_to_all_units(DewP["pressure_pa"]),
                         "phase_state": "Liquid Only"}
 
-            elif F1 > 0:
+            elif F0 > 0 and F1 > 0:
                 beta = 1.0
                 y = z[:]
                 x = [yi / K[i] for i, yi in enumerate(y)]
@@ -192,6 +192,7 @@ def Isothermal_Flash(CNO,components,overall_compositions,T,P,model,parameters,co
                 component = {"name": componentnames[i],"P_sat_Pa": pressure_to_pa(P_sat, PU_i)}
                 components.append(component)
         else:
+            components.clear()
             components.extend(get_antoine_components(componentnames))
     if "A" in components[0]:
         for component in components:

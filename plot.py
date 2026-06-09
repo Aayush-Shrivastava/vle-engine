@@ -387,13 +387,23 @@ def flash_VF_vs_T(components, z, P, model, parameters, Tmin, Tmax, Tstep):
         T += Tstep
 
     BubbleT_plot = None
-    DewT_plot    = None
+    tol=1e-6
+    for i in range(1, len(VFdata)):
+        if VFdata[i-1] <= tol and VFdata[i] > tol:
+            frac = (tol - VFdata[i-1])/(VFdata[i]-VFdata[i-1])
+            BubbleT_plot = (Tdata[i-1]+ frac*(Tdata[i]-Tdata[i-1]))
+            break
+    DewT_plot = None
+    for i in range(1, len(VFdata)):
+        if VFdata[i-1] <= 1-tol and VFdata[i] > 1-tol:
+            frac = ((1-tol) - VFdata[i-1])/(VFdata[i]-VFdata[i-1])
+            DewT_plot = (Tdata[i-1]+ frac*(Tdata[i]-Tdata[i-1]))
+            break
     for i in range(len(VFdata)):
-        if BubbleT_plot is None and VFdata[i] > 0.01:
-            BubbleT_plot = Tdata[i]
-        if DewT_plot is None and VFdata[i] > 0.99:
-            DewT_plot = Tdata[i]
-    VFdata = [max(0.0, min(1.0, v)) for v in VFdata]
+        if VFdata[i] < tol:
+            VFdata[i] = 0.0
+        elif VFdata[i] > (1-tol):
+            VFdata[i] = 1.0
 
     plt.figure(figsize=(8, 6))
     plt.plot(Tdata, VFdata, color='red', linewidth=2, label="V/F vs T")
@@ -417,6 +427,11 @@ def flash_VF_vs_T(components, z, P, model, parameters, Tmin, Tmax, Tstep):
 def flash_VF_vs_P(components, z, T, model, parameters, Pmin, Pmax, Pstep, PU):
     divisor = UNIT_DIVISORS[PU]
     label   = UNIT_LABELS[PU]
+    if "A" in components[0]:
+        for component in components:
+            T_CONV = from_kelvin(T, component["TU"])
+            P_sat = getvapourpressure(component["A"],component["B"],component["C"],T_CONV,component["FORM"])
+            component["P_sat_Pa"] = pressure_to_pa(P_sat,component["PU"])
     Pdata, VFdata = [], []
     P = Pmin
     while P <= Pmax:
@@ -427,7 +442,6 @@ def flash_VF_vs_P(components, z, T, model, parameters, Pmin, Pmax, Pstep, PU):
         except Exception as e:
             print("Error: ",e)
         P += Pstep
-    VFdata = [max(0.0, min(1.0, v)) for v in VFdata]
 
     if model == "Ideal":
         gammas = [1.0] * len(z)
@@ -437,18 +451,28 @@ def flash_VF_vs_P(components, z, T, model, parameters, Pmin, Pmax, Pstep, PU):
         gammas = calculate_gammas(model, z, parameters, T)
     from bubble_pressure import Bubble_Pressure_Core
     from dew_pressure import Dew_Pressure_Core
-    BubbleP = Bubble_Pressure_Core(components, z, gammas, T, model)["pressure_pa"] / divisor
-    DewP    = Dew_Pressure_Core(components, z, gammas, T, model)["pressure_pa"] / divisor
+    BubbleP_plot = None
+    DewP_plot = None
+    tol=1e-6
+    for i in range(1, len(VFdata)):
+        if DewP_plot is None:
+            if VFdata[i-1] >= 1-tol and VFdata[i] < 1-tol:
+                frac = (((1-tol) - VFdata[i-1])/(VFdata[i] - VFdata[i-1]))
+                DewP_plot = (Pdata[i-1]+frac*(Pdata[i] - Pdata[i-1]))
+        if BubbleP_plot is None:
+            if VFdata[i-1] > tol and VFdata[i] <= tol:
+                frac = ((tol - VFdata[i-1])/(VFdata[i] - VFdata[i-1]))
+                BubbleP_plot = (Pdata[i-1]+frac*(Pdata[i] - Pdata[i-1]))
 
     plt.figure(figsize=(8, 6))
     plt.plot(Pdata, VFdata, color='red', linewidth=2, label="V/F vs P")
+    if BubbleP_plot is not None:
+        plt.axvline(BubbleP_plot,linestyle=":",linewidth=1.5,label=f"Bubble P ≈ {BubbleP_plot:.4f} {label}")
+    if DewP_plot is not None:
+        plt.axvline(DewP_plot,linestyle=":",linewidth=1.5,label=f"Dew P ≈ {DewP_plot:.4f} {label}")
     plt.ylim(-0.05, 1.05)
     plt.axhline(0, linestyle="--", color='blue',  linewidth=1, label="All Liquid (V/F = 0)")
     plt.axhline(1, linestyle="--", color='green', linewidth=1, label="All Vapour (V/F = 1)")
-    plt.axvline(BubbleP, linestyle=":", color='orange', linewidth=1.5,
-                label=f"Bubble P = {BubbleP:.4f} {label}")
-    plt.axvline(DewP,    linestyle=":", color='purple', linewidth=1.5,
-                label=f"Dew P = {DewP:.4f} {label}")
     plt.xlabel(f"Pressure ({label})")
     plt.ylabel("Vapour Fraction (V/F)")
     plt.title("Vapour Fraction vs Pressure")
@@ -554,16 +578,24 @@ def adiabatic_VF_vs_P(components, z, feed_temperature, model, parameters, Pmin, 
     if not VFdata:
         print("\nNo valid points. Check pressure range and component data.")
         return
-    DewP_plot    = None
+    DewP_plot = None
     BubbleP_plot = None
-    prev_VF = VFdata[0]
     for i in range(1, len(VFdata)):
-        if DewP_plot is None and prev_VF >= 0.99 and VFdata[i] < 0.99:
-            DewP_plot = Pdata[i]
-        if BubbleP_plot is None and VFdata[i] < 0.01:
-            BubbleP_plot = Pdata[i]
-        prev_VF = VFdata[i]
-    VFdata = [max(0.0, min(1.0, v)) for v in VFdata]
+        tol=1e-6
+        if DewP_plot is None:
+            if VFdata[i-1] > 1-tol and VFdata[i] <= 1-tol:
+                P1 = Pdata[i-1]
+                P2 = Pdata[i]
+                VF1 = VFdata[i-1]
+                VF2 = VFdata[i]
+                DewP_plot = P1 + ((1-tol) - VF1) * (P2 - P1) / (VF2 - VF1)
+        if BubbleP_plot is None:
+            if VFdata[i-1] > tol and VFdata[i] <= tol:
+                P1 = Pdata[i-1]
+                P2 = Pdata[i]
+                VF1 = VFdata[i-1]
+                VF2 = VFdata[i]
+                BubbleP_plot = P1 + (tol - VF1) * (P2 - P1) / (VF2 - VF1)
 
     plt.figure(figsize=(8, 6))
     plt.plot(Pdata, VFdata, color='red', linewidth=2, label="V/F vs P")
@@ -572,10 +604,10 @@ def adiabatic_VF_vs_P(components, z, feed_temperature, model, parameters, Pmin, 
     plt.axhline(1, linestyle="--", color='green', linewidth=1, label="All Vapour")
     if DewP_plot is not None:
         plt.axvline(DewP_plot, linestyle=":", color='purple', linewidth=1.5,
-                    label=f"Two-phase ends ≈ {BubbleP_plot:.2f} {label}")
+                    label=f"Two-phase begins ≈ {DewP_plot:.2f} {label}")
     if BubbleP_plot is not None:
         plt.axvline(BubbleP_plot, linestyle=":", color='orange', linewidth=1.5,
-                    label=f"Two-phase begins ≈ {DewP_plot:.2f} {label}")
+                    label=f"Two-phase ends ≈ {BubbleP_plot:.2f} {label}")
     plt.xlabel(f"Pressure ({label})")
     plt.ylabel("Vapour Fraction (V/F)")
     plt.title("Adiabatic Flash: Vapour Fraction vs Pressure")
