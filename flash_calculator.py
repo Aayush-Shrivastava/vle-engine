@@ -34,11 +34,14 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
                 y = [K[i] * x[i] for i in range(len(z))]
                 total_y = sum(y)
                 y = [yi / total_y for yi in y]
+                K_display = []
+                for i in range(len(z)):
+                    K_display.append(y[i] / x[i])
                 BubbleP = Bubble_Pressure_Core(components, z, gammas, T, model)
                 DewP = Dew_Pressure_Core(components, z, gammas, T, model)
                 return {"temperature_K": T, "pressure_pa": P,
                         "V_over_F": 0.0, "L_over_F": 1.0,
-                        "x": x, "y": y, "z": z, "K": K, "gamma": gammas,
+                        "x": x, "y": y, "z": z, "K": K_display, "gamma": gammas,
                         "model": model,
                         "components": [c["name"] for c in components],
                         "temperature_units": kelvin_to_all_units(T),
@@ -55,11 +58,14 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
                 x = [yi / K[i] for i, yi in enumerate(y)]
                 total_x = sum(x)
                 x = [xi / total_x for xi in x]
+                K_display = []
+                for i in range(len(z)):
+                    K_display.append(y[i] / x[i])
                 BubbleP = Bubble_Pressure_Core(components, z, gammas, T, model)
                 DewP = Dew_Pressure_Core(components, z, gammas, T, model)
                 return {"temperature_K": T, "pressure_pa": P,
                         "V_over_F": 1.0, "L_over_F": 0.0,
-                        "x": x, "y": y, "z": z, "K": K, "gamma": gammas,
+                        "x": x, "y": y, "z": z, "K": K_display, "gamma": gammas,
                         "model": model,
                         "components": [c["name"] for c in components],
                         "temperature_units": kelvin_to_all_units(T),

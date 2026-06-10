@@ -1,5 +1,6 @@
 from pressureconversion import pressure_to_pa
 from antoine import to_kelvin
+from model_selector import Model_Selector
 from matplotlib import pyplot as plt
 
 def get_temperature(prompt):
@@ -81,17 +82,21 @@ def get_compositions(componentnames, phase):
                     print("Error: Please enter a valid number.")
                     continue
                 if value < 0 or value > 1:
+                    print(f"Error: {phase.capitalize()} composition ""must be between 0 and 1.")
+                    continue
+                if value < 0 or value > 1:
                     print(f"Error: {phase.capitalize()} ""composition must be between 0 and 1.")
                     continue
                 compositions.append(value)
                 break
-        if abs(sum(compositions) - 1) > 1e-6:
-            print(f"\nError: {phase.capitalize()} ""compositions must sum to 1.")
-            print("Please re-enter all compositions.\n")
-            continue
-        return compositions
-    
-from model_selector import Model_Selector
+        total=sum(compositions)
+        if abs(total - 1.0) <= 1e-3:
+            if abs(total - 1.0) > 1e-6:
+                print(f"\nNote: {phase.capitalize()} compositions "f"sum to {total:.6f}.")
+                print("Normalizing compositions...\n")
+            return [x / total for x in compositions]
+        print(f"\nError: {phase.capitalize()} compositions "f"sum to {total:.6f}.")
+        print("Please re-enter all compositions.\n")
 
 def get_model(CNO, componentnames):
     parameters = {}
