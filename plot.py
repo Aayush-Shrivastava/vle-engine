@@ -170,7 +170,7 @@ def Pxy(components, model, parameters, Q):
               f"\nPressure = {P_az:.4f} {label}")
     plt.xlabel(f"Mole Fraction of {components[0]['name']}")
     plt.ylabel(f"Pressure ({label})")
-    plt.title(f"Pxy Diagram ({model})")
+    plt.title(f"Pxy Diagram — {components[0]['name']} / {components[1]['name']} ({model})")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
@@ -207,7 +207,7 @@ def Txy(components, model, parameters, P):
               f"\nTemperature = {T_az:.4f} {label}")
     plt.xlabel(f"Mole Fraction of {components[0]['name']}")
     plt.ylabel(f"Temperature ({label})")
-    plt.title(f"Txy Diagram ({model})")
+    plt.title(f"Txy Diagram — {components[0]['name']} / {components[1]['name']} ({model})")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
@@ -247,7 +247,7 @@ def xyT(components, model, parameters, Q):
         print(f"\nPossible azeotrope detected: x = y = {azeotrope_x:.4f}")
     plt.xlabel(f"Liquid Mole Fraction of {components[0]['name']}")
     plt.ylabel(f"Vapour Mole Fraction of {components[0]['name']}")
-    plt.title(f"xy Diagram - Constant T ({model})")
+    plt.title(f"xy Diagram (Constant T) — {components[0]['name']} / {components[1]['name']} ({model})")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
@@ -277,7 +277,7 @@ def xyP(components, model, parameters, PS_Pa):
         print(f"\nPossible azeotrope detected: x = y = {azeotrope_x:.4f}")
     plt.xlabel(f"Liquid Mole Fraction of {components[0]['name']}")
     plt.ylabel(f"Vapour Mole Fraction of {components[0]['name']}")
-    plt.title(f"xy Diagram - Constant P ({model})")
+    plt.title(f"xy Diagram (Constant P) — {components[0]['name']} / {components[1]['name']} ({model})")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
@@ -404,7 +404,7 @@ def flash_VF_vs_T(components, z, P, model, parameters, Tmin, Tmax, Tstep):
             VFdata[i] = 0.0
         elif VFdata[i] > (1-tol):
             VFdata[i] = 1.0
-
+    system_name = " / ".join([c["name"] for c in components])
     plt.figure(figsize=(8, 6))
     plt.plot(Tdata, VFdata, color='red', linewidth=2, label="V/F vs T")
     plt.ylim(-0.05, 1.05)
@@ -418,7 +418,7 @@ def flash_VF_vs_T(components, z, P, model, parameters, Tmin, Tmax, Tstep):
                     label=f"Dew T ≈ {DewT_plot:.2f} {label}")
     plt.xlabel(f"Temperature ({label})")
     plt.ylabel("Vapour Fraction (V/F)")
-    plt.title("Vapour Fraction vs Temperature")
+    plt.title(f"Vapour fraction vs Temperature — {system_name} ({model})")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
@@ -463,7 +463,7 @@ def flash_VF_vs_P(components, z, T, model, parameters, Pmin, Pmax, Pstep, PU):
             if VFdata[i-1] > tol and VFdata[i] <= tol:
                 frac = ((tol - VFdata[i-1])/(VFdata[i] - VFdata[i-1]))
                 BubbleP_plot = (Pdata[i-1]+frac*(Pdata[i] - Pdata[i-1]))
-
+    system_name = " / ".join([c["name"] for c in components])
     plt.figure(figsize=(8, 6))
     plt.plot(Pdata, VFdata, color='red', linewidth=2, label="V/F vs P")
     if BubbleP_plot is not None:
@@ -475,7 +475,7 @@ def flash_VF_vs_P(components, z, T, model, parameters, Pmin, Pmax, Pstep, PU):
     plt.axhline(1, linestyle="--", color='green', linewidth=1, label="All Vapour (V/F = 1)")
     plt.xlabel(f"Pressure ({label})")
     plt.ylabel("Vapour Fraction (V/F)")
-    plt.title("Vapour Fraction vs Pressure")
+    plt.title(f"Vapour fraction vs Pressure — {system_name} ({model})")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
@@ -538,13 +538,14 @@ def adiabatic_Tflash_vs_P(components, z, feed_temperature, model, parameters, Pm
         print("\nNo valid points. Check pressure range and component data.")
         return
     feed_T_plot = from_kelvin(feed_temperature, TU)
+    system_name = " / ".join([c["name"] for c in components])
     plt.figure(figsize=(8, 6))
     plt.plot(Pdata, Tdata, color='red', linewidth=2, label="Flash Temperature")
     plt.axhline(feed_T_plot, linestyle=":", color='orange', linewidth=1.5,
                 label=f"Feed Temperature = {feed_T_plot:.2f} {Tlabel}")
     plt.xlabel(f"Pressure ({Plabel})")
     plt.ylabel(f"Flash Temperature ({Tlabel})")
-    plt.title("Adiabatic Flash Temperature vs Pressure")
+    plt.title(f"Adiabatic Flash Temperature vs Pressure — {system_name} ({model})")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
@@ -596,7 +597,7 @@ def adiabatic_VF_vs_P(components, z, feed_temperature, model, parameters, Pmin, 
                 VF1 = VFdata[i-1]
                 VF2 = VFdata[i]
                 BubbleP_plot = P1 + (tol - VF1) * (P2 - P1) / (VF2 - VF1)
-
+    system_name = " / ".join([c["name"] for c in components])
     plt.figure(figsize=(8, 6))
     plt.plot(Pdata, VFdata, color='red', linewidth=2, label="V/F vs P")
     plt.ylim(-0.05, 1.05)
@@ -610,7 +611,7 @@ def adiabatic_VF_vs_P(components, z, feed_temperature, model, parameters, Pmin, 
                     label=f"Two-phase ends ≈ {BubbleP_plot:.2f} {label}")
     plt.xlabel(f"Pressure ({label})")
     plt.ylabel("Vapour Fraction (V/F)")
-    plt.title("Adiabatic Flash: Vapour Fraction vs Pressure")
+    plt.title(f"Adiabatic V/F vs P — {system_name} ({model})")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
