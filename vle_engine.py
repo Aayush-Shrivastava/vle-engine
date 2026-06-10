@@ -14,9 +14,12 @@ from input_helper import get_compositions,get_model,get_antoine_components,get_t
 from flash_calculator import Isothermal_Flash,Adiabatic_Flash
 
 while True:
-
-    print("\nVLE ENGINE")
-    print("\nBY: AAYUSH SHRIVASTAVA")
+    print("\n==================================================")
+    print("                VLE ENGINE")
+    print("     Thermodynamics & Phase Equilibrium")
+    print("                  Suite")
+    print("            Aayush Shrivastava")
+    print("==================================================")
     print("\n1. Vapour Pressure Calculator")
     print("2. Calculate Acivity coefficients")
     print("3. Bubble Pressure")
