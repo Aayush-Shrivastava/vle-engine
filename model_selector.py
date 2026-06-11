@@ -1,9 +1,12 @@
 from unifac_data import UNIFAC_COMPONENTS
-def Model_Selector(CNO,componentnames):
+def Model_Selector(CNO: int,componentnames: list[str])->tuple[str,dict[str,float]]:
     parameters = {}
     while True:
             if CNO==2:
                 try:
+
+                    """This menu is displayed when the user chooses a binary system"""
+
                     mi=int(input("\nAvailable Activity Coefficient Models:\n"
                                 "1. 2-Suffix Margules\n"
                                 "2. 3-Suffix Margules\n"
@@ -19,7 +22,7 @@ def Model_Selector(CNO,componentnames):
                     print("Please select a valid model")
                     continue
                 if mi==1:
-                    model="2SM"
+                    model="2SM" #Binary 2-Suffix Margules
                     try:    
                         parameters["A"]=float(input("Enter the value for model parameter A:\n"))
                         break
@@ -27,7 +30,7 @@ def Model_Selector(CNO,componentnames):
                         print("Enter a valid value for model parameter A:")
                         continue   
                 elif mi==2:
-                    model="3SM"
+                    model="3SM" #Binary 3-Suffix Margules
                     try:
                         parameters["A12"]=float(input("Enter the value for model parameter A12:\n"))
                         parameters["A21"]=float(input("Enter the value for model parameter A21:\n"))
@@ -36,7 +39,7 @@ def Model_Selector(CNO,componentnames):
                         print("Enter Valid Values for model parameters A12 and A21")
                         continue
                 elif mi==3: 
-                    model="VL"
+                    model="VL" #Binary Van-Laar
                     try:
                         parameters["A12"]=float(input("Enter the value for model parameter A12:\n"))
                         parameters["A21"]=float(input("Enter the value for model parameter A21:\n"))
@@ -45,7 +48,7 @@ def Model_Selector(CNO,componentnames):
                         print("Enter Valid Values for model parameters A12 and A21")
                         continue
                 elif mi==4:
-                    model="WILSON"
+                    model="WILSON" #Wilson Model
                     Lambda = []
                     print("\nEnter Wilson Lambda Parameters:")
 
@@ -53,7 +56,7 @@ def Model_Selector(CNO,componentnames):
                         row = []
                         for j in range(CNO):
                             if i == j:
-                                row.append(1.0)
+                                row.append(1.0) 
                             else:
                                 while True:
                                     try:
@@ -62,11 +65,11 @@ def Model_Selector(CNO,componentnames):
                                         break
                                     except ValueError:
                                         print("Please enter a valid number.")
-                        Lambda.append(row)
+                        Lambda.append(row) #2D list(matrix) formed
                     parameters["Lambda"] = Lambda
                     break
                 elif mi==5:
-                    model="NRTL"
+                    model="NRTL" #NRTL model
                     tau=[]
                     alpha=[]
                     for i in range(CNO):
@@ -86,13 +89,13 @@ def Model_Selector(CNO,componentnames):
                                         break
                                     except ValueError:
                                         print("Please enter valid numbers for tau and alpha.")
-                        tau.append(row_tau)
-                        alpha.append(row_alpha)
+                        tau.append(row_tau)     #2D tau list(Matrix) is formed(2x2)
+                        alpha.append(row_alpha) #2D alpha list(Matrix) is formed(2x2)
                     parameters["tau"]=tau
                     parameters["alpha"]=alpha
                     break
                 elif mi==6:
-                    model="UNIQUAC"
+                    model="UNIQUAC" #UNIQUAC Model
                     r=[]
                     q=[]
                     tauuniquac=[]
@@ -123,13 +126,13 @@ def Model_Selector(CNO,componentnames):
                             else:
                                 while True:
                                     try:
-                                        value_tau = float(input(f"Enter tauuniquac{i+1}{j+1}: "))
+                                        value_tau = float(input(f"Enter tau{i+1}{j+1}: "))
                                         row_tauuniquac.append(value_tau)
                                         break
                                     except ValueError:
-                                        print("Please enter a valid number for tauuniquac.")
+                                        print("Please enter a valid number for tau.")
                                         continue
-                        tauuniquac.append(row_tauuniquac)
+                        tauuniquac.append(row_tauuniquac) #2D tau(uniquac) list(Matrix) is formed.
                     parameters["tau"]=tauuniquac
                     break
                 elif mi==7:
@@ -146,8 +149,7 @@ def Model_Selector(CNO,componentnames):
                             missing = True
                             continue
 
-                        data = UNIFAC_COMPONENTS[component]
-
+                        data = UNIFAC_COMPONENTS[component] #UNIFAC paramters data is fetched from uniquac_data.py 
                         r.append(data["r"])
                         q.append(data["q"])
                         groups.append(data["groups"])
@@ -164,6 +166,10 @@ def Model_Selector(CNO,componentnames):
 
             else:
                 try:
+
+                    """This menu is displayed when user chooses a multicomponent system.
+                    This menu doesn't have the options for Margules and Van-Laar equations"""
+
                     mi=int(input("\nAvailable Activity Coefficient Models:\n"
                                 "1. Wilson Equation\n"
                                 "2. NRTL Equation\n"
@@ -176,7 +182,7 @@ def Model_Selector(CNO,componentnames):
                     print("Please select a valid model")
                     continue
                 if mi==1:
-                    model="WILSON"
+                    model="WILSON" #Wilson Model
                     Lambda = []
                     print("\nEnter Wilson Lambda Parameters:")
                     for i in range(CNO):
@@ -192,11 +198,11 @@ def Model_Selector(CNO,componentnames):
                                         break
                                     except ValueError:
                                         print("Please enter a valid number.")
-                        Lambda.append(row)
+                        Lambda.append(row) #2D Lambda list(Matrix) is formed(CNO x CNO)
                     parameters["Lambda"] = Lambda
                     break
                 elif mi==2:
-                    model="NRTL"
+                    model="NRTL" #NRTL Model
                     tau=[]
                     alpha=[]
                     for i in range(CNO):
@@ -216,13 +222,13 @@ def Model_Selector(CNO,componentnames):
                                         break
                                     except ValueError:
                                         print("Please enter valid numbers for tau and alpha.")
-                        tau.append(row_tau)
-                        alpha.append(row_alpha)
+                        tau.append(row_tau)     #2D tau list(Matrix) is formed (CNO x CNO)
+                        alpha.append(row_alpha) #2D alpha list(Matrix) is formed (CNO x CNO)
                     parameters["tau"]=tau
                     parameters["alpha"]=alpha
                     break
                 elif mi==3:
-                    model="UNIQUAC"
+                    model="UNIQUAC" #UNIQUAC Model
                     r=[]
                     q=[]
                     tauuniquac=[]
@@ -252,17 +258,17 @@ def Model_Selector(CNO,componentnames):
                             else:
                                 while True:
                                     try:
-                                        value_tau = float(input(f"Enter tauuniquac{i+1}{j+1}: "))
+                                        value_tau = float(input(f"Enter tau{i+1}{j+1}: "))
                                         row_tauuniquac.append(value_tau)
                                         break
                                     except ValueError:
                                         print("Please enter a valid number for tauuniquac.")
                                         continue
-                        tauuniquac.append(row_tauuniquac)
+                        tauuniquac.append(row_tauuniquac) #2D tau list(Matrix) is formed (CNO x CNO)
                     parameters["tau"]=tauuniquac
                     break
                 elif mi==4:
-                    model="UNIFAC"
+                    model="UNIFAC" #UNIFAC Model
                     r = []
                     q = []
                     groups = []
@@ -275,7 +281,7 @@ def Model_Selector(CNO,componentnames):
                             missing = True
                             continue
 
-                        data = UNIFAC_COMPONENTS[component]
+                        data = UNIFAC_COMPONENTS[component] #UNIFAC paramters data is fetched from uniquac_data.py 
 
                         r.append(data["r"])
                         q.append(data["q"])
