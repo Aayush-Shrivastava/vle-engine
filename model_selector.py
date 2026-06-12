@@ -1,5 +1,6 @@
 from unifac_data import UNIFAC_COMPONENTS
-def Model_Selector(CNO: int,componentnames: list[str])->tuple[str,dict[str,float]]:
+from typing import Any
+def Model_Selector(CNO: int,componentnames: list[str])->tuple[str,dict[str,Any]]:
     parameters = {}
     while True:
             if CNO==2:

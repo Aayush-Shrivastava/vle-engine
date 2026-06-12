@@ -1,6 +1,8 @@
 from activity_coefficient_models import BS2Margules,BS3Margules,BVanLaar,Wilson,NRTL,UNIQUAC,UNIFAC
 from antoine import from_kelvin
-def calculate_gammas(model: str,x: list[float],parameters: dict[str,float],T: float=None)->list[float]:
+from typing import Any
+
+def calculate_gammas(model: str,x: list[float],parameters: dict[str,Any],T: float=None)->list[float]:
 
     """It recieves model name as string, liquid composition list, paramters dicitionary and temperature value
     (float for UNIFAC and None for every other model) and based on the model calls the resfective model function 

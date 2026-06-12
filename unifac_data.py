@@ -762,12 +762,19 @@ GROUP_INTERACTIONS = {
     },
 }
 
+def get_interaction(group_m: str, group_n: str)->float:
 
-def get_interaction(group_m, group_n):
-    """
-    Returns UNIFAC interaction parameter a_mn (in Kelvin).
-    Returns 0.0 if groups are identical or pair is not in the table.
-    """
+    """Returns UNIFAC interaction parameter a_mn (in Kelvin).
+    Returns 0.0 if groups are identical or pair is not in the table."""
+    
+
+    """Returns the UNIFAC interaction parameter a_mn (K)
+    between two functional groups.
+
+    Returns 0.0 if the groups are identical or if no
+    interaction parameter is available in the database."""
+    
+
     if group_m == group_n:
         return 0.0
     return GROUP_INTERACTIONS.get(group_m, {}).get(group_n, 0.0)
