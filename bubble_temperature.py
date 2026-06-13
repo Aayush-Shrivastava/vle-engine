@@ -8,11 +8,11 @@ from numericalmethods import Newton_Raphson_Method
 from gamma_calculator import calculate_gammas
 from typing import Any
 
-def Bubble_Temperature_Core(components: list[dict[str,Any]],liquidcompositions: list[float],gammas: list[float],PS_Pa: float,model: str,parameters: dict[str,Any],M: float)->dict[str,Any]:
+def Bubble_Temperature_Core(components: list[dict[str,Any]],liquidcompositions: list[float],PS_Pa: float,model: str,parameters: dict[str,Any],M: float)->dict[str,Any]:
 
     """A helper function which does the main calculation part of Bubble Pressure calculation.It takes 
     a list of components which contain component names, Psat (Pa) along with liquid composition list, 
-    System pressure in Pascals, activity coefficient list,Initial temperature guess and model name as 
+    System pressure in Pascals, Initial temperature guess and model name as 
     a string as an input and returns a dictionary containing System pressure in Pascals along with component 
     data like name,liquid and vapour compositions,activity coefficient, Psat and Bubble temperature in all 4 units """
 
