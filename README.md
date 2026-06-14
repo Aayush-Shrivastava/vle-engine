@@ -71,6 +71,7 @@ UNIFAC uses original Fredenslund/Gmehling (1977/1982) parameters — not the mod
 ```
 vle-engine/
 ├── README.md
+├── VALIDATION.md
 ├── requirements.txt
 ├── vle_engine.py
 ├── activity_coefficients_models.py
@@ -171,8 +172,15 @@ Dew Pressure    : 456.2 mmHg
 
 ## Validation
 
-A full test suite was run against literature values before publication. 
-Test cases and expected results are available on request.
+A full validation suite was run against analytical solutions, pure component 
+limits, and literature reference values before publication.
+
+19 numerical test cases were executed covering all 12 functions, alongside 
+4 graphical validation checklists. All tests passed within accepted engineering 
+tolerances.
+
+Full test cases, inputs, expected values, deviations, and pass/fail status are 
+documented in [VALIDATION.md](VALIDATION.md).
 
 ---
 
@@ -191,6 +199,7 @@ Test cases and expected results are available on request.
 - Cp (liquid and vapour) and heat of vaporisation (Hvap) are treated as temperature-independent constants. This introduces approximately 2-5% error over narrow temperature ranges, which is acceptable for preliminary engineering calculations but not for high-accuracy design work.
 - Unit conversion for enthalpy data supports J/mol and kJ/mol only. Mass-based units (J/kg, kJ/kg) require molecular weight which would need a separate component database — planned for a future update.
 - The adiabatic flash solver scans downward from feed temperature in 0.5K steps to find the energy balance bracket. For systems with very sharp energy balance transitions this may occasionally miss the bracket — the bisection fallback handles most such cases.
+- All-liquid adiabatic flash requires feed temperatures near or below the bubble point at flash conditions.
 
 **Flash Calculations General:**
 - Non-ideal multicomponent flash (3+ components) with activity coefficient models is supported for Wilson, NRTL, UNIQUAC, and UNIFAC only. Margules and Van Laar are restricted to binary flash.

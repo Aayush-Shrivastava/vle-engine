@@ -6,6 +6,7 @@ from antoine import from_kelvin,getvapourpressure,kelvin_to_all_units
 from bubble_pressure import Bubble_Pressure_Core
 from dew_pressure import Dew_Pressure_Core
 from typing import Any
+import math
 
 def Isothermal_Flash_Core(components: list[dict[str,Any]],z: list[float],T: float,P: float,model: str,parameters: dict[str,Any])->dict[str,Any]:
 
@@ -49,7 +50,7 @@ def Isothermal_Flash_Core(components: list[dict[str,Any]],z: list[float],T: floa
                 DewP = Dew_Pressure_Core(components, z, gammas, T, model)
                 return {"temperature_K": T, "pressure_pa": P,
                         "V_over_F": 0.0, "L_over_F": 1.0,
-                        "x": x, "y-equilibrium": y, "z": z, "K": K_display, "gamma": gammas,
+                        "x": x, "y": y, "z": z, "K": K_display, "gamma": gammas,
                         "model": model,
                         "components": [c["name"] for c in components],
                         "temperature_units": kelvin_to_all_units(T),
@@ -295,6 +296,19 @@ def Adiabatic_Flash_Core(components: list[dict[str,Any]], z: list[float], Pflash
                 P_sat = getvapourpressure(component["A"], component["B"],
                                          component["C"], T_CONV, component["FORM"])
                 component["P_sat_Pa"] = pressure_to_pa(P_sat, component["PU"])
+                component["P_sat_Pa_feed"] = component["P_sat_Pa"]
+        else:
+            # No Antoine coefficients — Psat was entered manually at feed temperature
+            # Scale Psat with temperature using Clausius-Clapeyron approximation
+            Tref_psat = feed_data["feed_temperature"]
+            for component in components:
+                if "Hvap_psat" in component:
+                    Hvap = component["Hvap_psat"]
+                else:
+                    Hvap = 35000  # J/mol, reasonable default for light organics
+                component["P_sat_Pa"] = component["P_sat_Pa_feed"] * math.exp(
+                    -Hvap / 8.314 * (1/T - 1/Tref_psat)
+                )
         flash_result = Isothermal_Flash_Core(components, z, T, Pflash, model, parameters) #When this function is later called,
         beta = flash_result["V_over_F"]                                                   #it calls Isothermal_Flash_Core() and
         x = flash_result["x"]                                                             #solves for x,y and V/F repeatedly for
@@ -315,16 +329,16 @@ def Adiabatic_Flash_Core(components: list[dict[str,Any]], z: list[float], Pflash
     Tfeed = feed_data["feed_temperature"]
     T_low = None
     T_high = None
-    E_prev = Energy_Balance(Tfeed) #Calling energy balance at feed temperature
+    E_prev = Energy_Balance(Tfeed)
     T_prev = Tfeed
 
     T_try = Tfeed - 0.5
-    while T_try > 100:
+    while T_try > 273.15:
         try:
-            E_try = Energy_Balance(T_try) #Calling energy balance within this while loop
-            if E_try * E_prev < 0: #Solution region found
-                T_low  = T_try
-                T_high = T_prev  #Bracket is between consecutive points
+            E_try = Energy_Balance(T_try)
+            if E_try * E_prev < 0:
+                T_low = T_try
+                T_high = T_prev
                 break
             E_prev = E_try
             T_prev = T_try
@@ -332,18 +346,17 @@ def Adiabatic_Flash_Core(components: list[dict[str,Any]], z: list[float], Pflash
             pass
         T_try -= 0.5
 
-    try:
-        if T_low is not None:
-            Tguess = (T_low + T_high)/2 #Calulating initial guess for Newton-Raphson method
+    if T_low is None:
+        final_result = Isothermal_Flash_Core(components, z, Tfeed, Pflash, model, parameters)
+        if final_result["V_over_F"] >= 1.0:
+            Tflash = Tfeed
         else:
-            Tguess = Tfeed - 10
-        Tflash = Newton_Raphson_Method(Energy_Balance, Tguess, 1e-8, 500) #Newton-Raphson attempt block
-    except ValueError:
-        if T_low is not None:
-            Tflash = Bisection_Method(Energy_Balance, T_low, T_high, 1e-8) #Bisection fallback block
-        else:
-            raise ValueError("Adiabatic flash did not converge. "
-                           "Check Cp and Hvap values and feed temperature.")
+            raise ValueError("Adiabatic flash did not converge. Check Cp, Hvap, and pressure inputs.")
+    else:
+        Tguess = (T_low + T_high) / 2
+        Tflash = Newton_Raphson_Method(Energy_Balance, Tguess, 1e-8, 500)
+        if Tflash < 273.15 or Tflash > Tfeed:
+            Tflash = Bisection_Method(Energy_Balance, T_low, T_high, 1e-8)
 
     if "A" in components[0]:   #Updating Pisat values from converged Tflash values
         for component in components:
@@ -425,7 +438,8 @@ def Adiabatic_Flash(CNO: int,components: list[dict[str,Any]],overall_composition
                         break
                     except ValueError:
                         print("Please enter valid vapour pressure data.")
-                component = {"name": componentnames[i],"P_sat_Pa": pressure_to_pa(P_sat,PU_i)}
+                psat_pa = pressure_to_pa(P_sat, PU_i)
+                component = {"name": componentnames[i], "P_sat_Pa": psat_pa, "P_sat_Pa_feed": psat_pa}
                 components.append(component)
         else:
             components.extend(get_antoine_components(componentnames))
@@ -434,6 +448,7 @@ def Adiabatic_Flash(CNO: int,components: list[dict[str,Any]],overall_composition
             T_CONV = from_kelvin(feed_temperature,component["TU"])
             P_sat = getvapourpressure(component["A"],component["B"],component["C"],T_CONV,component["FORM"])
             component["P_sat_Pa"] = pressure_to_pa(P_sat,component["PU"])
+            component["P_sat_Pa_feed"] = component["P_sat_Pa"]
     
     if "Cp_liquid" not in parameters:  #Gathering Cp and Hv block
         Cp_liquid = [] 
