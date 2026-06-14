@@ -17,6 +17,10 @@ def Bubble_Temperature_Core(components: list[dict[str,Any]],liquidcompositions: 
     and vapour compositions,activity coefficient, Psat and Bubble temperature in all 4 units"""
 
     def bubble_point_temperature(T: float)->float:
+
+        """The returned value will be fed to Newton_Raphson_Method or Bisection_Method if Newton Raphson fails in order 
+        to solve Σxi*γi*Pisat-Psystem=0 where Psat is a function of Temperature"""
+        
         bubblepressure=0
         if model == "Ideal":
             gammas = [1.0]*len(liquidcompositions)
@@ -30,9 +34,6 @@ def Bubble_Temperature_Core(components: list[dict[str,Any]],liquidcompositions: 
             P_sat_Pa=pressure_to_pa(P_sat, component["PU"])
             bubblepressure+=liquidcompositions[i]*gammas[i]*P_sat_Pa #Calculating Σxi*γi*Pisat (Bubble Pressure)
         return bubblepressure-PS_Pa #returns Σxi*γi*Pisat-Psystem
-    
-    """The returned value will be fed to Newton_Raphson_Method or Bisection_Method if Newton Raphson fails in order 
-    to solve Σxi*γi*Pisat-Psystem=0 where Psat is a function of Temperature"""
 
     try:
         bubble_temperature=Newton_Raphson_Method(bubble_point_temperature, M, 1e-6, 500)#M is the initial temperature guess

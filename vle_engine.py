@@ -13,6 +13,30 @@ from input_helper import get_temperature,get_component_names,get_pressure,get_te
 from input_helper import get_compositions,get_model,get_antoine_components,get_temperature_guess
 from flash_calculator import Isothermal_Flash,Adiabatic_Flash
 
+"""VLE Engine Main Application
+
+This file serves as the command-line entry point for the VLE Engine. It provides an interactive user interface to the users 
+and coordinates the execution of thermodynamic calculations implemented in the underlying modules.
+
+Available capabilities include:
+
+- Vapour pressure calculations
+- Activity coefficient calculations
+- Bubble pressure calculations
+- Bubble temperature calculations
+- Dew pressure calculations
+- Dew temperature calculations
+- Pxy, Txy and xy diagram generation
+- Isothermal flash calculations
+- Adiabatic flash calculations
+
+The computational logic is implemented in the corresponding
+calculation modules. This file primarily handles menu navigation,
+user input flow, execution control and result presentation."""
+
+# ==========================================
+# Main Menu Loop
+# ==========================================
 while True:
     print("\n==================================================")
     print("                VLE ENGINE")
@@ -42,6 +66,9 @@ while True:
         print("Error:Invalid choice selection-Please enter a valid choice.")
         continue
     
+    # ==========================================
+    # Vapour Pressure Calculator
+    # ==========================================
     if choice==1:
         new_component=True
         while True:
@@ -123,6 +150,9 @@ while True:
             elif next_action == 3:
                 break
     
+    # ==========================================
+    # Activity Coefficient Calculations
+    # ==========================================
     elif choice==2:
         new_system = True
         change_model = False
@@ -175,7 +205,10 @@ while True:
                 continue
             elif next_action == 4:
                 break
-
+    
+    # ==========================================
+    # Bubble Pressure Calculations
+    # ==========================================
     elif choice==3:
         new_system = True
         change_model = False
@@ -313,6 +346,9 @@ while True:
             elif action == 6:
                 break
     
+    # ==========================================
+    # Bubble Temperature Calculations
+    # ==========================================
     elif choice==4:
         new_system = True
         change_pressure = False
@@ -431,6 +467,9 @@ while True:
             elif next_action == 7:
                 break
 
+    # ==========================================
+    # Dew Pressure Calculations
+    # ==========================================
     elif choice==5:
         new_system = True
         change_model = False
@@ -590,6 +629,9 @@ while True:
             elif action == 6:
                 break
 
+    # ==========================================
+    # Dew Temperature Calculations
+    # ==========================================
     elif choice==6:
         new_system = True
         change_pressure = False
@@ -714,16 +756,28 @@ while True:
                 continue
             elif next_action == 7:
                 break
-        
+
+    # ==========================================
+    # Plotting Pxy diagram 
+    # ==========================================
     elif choice == 7:
         standalone_pxy()
 
+    # ==========================================
+    # Plotting Txy diagram 
+    # ==========================================
     elif choice == 8:
         standalone_txy()
 
+    # ==========================================
+    # Plotting xy diagram 
+    # ==========================================
     elif choice == 9:
         standalone_xy()
 
+    # ==========================================
+    # Plotting multiple diagrams
+    # ==========================================
     elif choice == 10:
         selection = multiple_plot_menu()
         if selection == 7:
@@ -768,7 +822,9 @@ while True:
                 Txy(components,model,parameters,PS_Pa)
                 xyP(components,model,parameters,PS_Pa)
 
-
+    # ==========================================
+    # Isothermal Flash Calculations
+    # ==========================================
     elif choice==11:
         new_system = True
         change_temperature = False
@@ -870,7 +926,10 @@ while True:
                 new_system = True
             elif action == 7:
                 break
-
+    
+    # ==========================================
+    # Adiabatic Flash Calculations
+    # ==========================================
     elif choice==12:
         new_system = True
         change_feed_temperature = False
@@ -971,5 +1030,8 @@ while True:
             elif action == 8:
                 break
 
+    # ==========================================
+    # Exit
+    # ==========================================
     elif choice==13:
         break

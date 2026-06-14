@@ -1,12 +1,17 @@
 from unifac_data import UNIFAC_COMPONENTS
 from typing import Any
+
 def Model_Selector(CNO: int,componentnames: list[str])->tuple[str,dict[str,Any]]:
+
+    """This function takes number of components and component names list as an input and returns
+    model name as a string and parameters dicitonary"""
+    
     parameters = {}
     while True:
             if CNO==2:
                 try:
 
-                    """This menu is displayed when the user chooses a binary system"""
+                    #This menu is displayed when the user chooses a binary system
 
                     mi=int(input("\nAvailable Activity Coefficient Models:\n"
                                 "1. 2-Suffix Margules\n"
@@ -168,8 +173,8 @@ def Model_Selector(CNO: int,componentnames: list[str])->tuple[str,dict[str,Any]]
             else:
                 try:
 
-                    """This menu is displayed when user chooses a multicomponent system.
-                    This menu doesn't have the options for Margules and Van-Laar equations"""
+                    #This menu is displayed when user chooses a multicomponent system.
+                    #This menu doesn't have the options for Margules and Van-Laar equations
 
                     mi=int(input("\nAvailable Activity Coefficient Models:\n"
                                 "1. Wilson Equation\n"

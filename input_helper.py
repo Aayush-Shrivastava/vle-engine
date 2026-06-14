@@ -1,9 +1,17 @@
 from pressureconversion import pressure_to_pa
 from antoine import to_kelvin
 from model_selector import Model_Selector
-from matplotlib import pyplot as plt
+from typing import Any
 
-def get_temperature(prompt):
+"""Input helper module: This file contains several helper functions that are repeatedly used throughout this VLE-ENGINE 
+package."""
+
+def get_temperature(prompt: str)->float:
+    
+    """This helper function takes a string prompt as an input. The prompt is displayed as a message when the function
+    asks for temperature input from the user. This function takes the input of temperature and its unit denoted as an 
+    integer as an input from the user and returns value of temperature in Kelvin unit."""
+
     while True:
         try:
             T = float(input(prompt))
@@ -31,7 +39,11 @@ def get_temperature(prompt):
 
         return T_K
     
-def get_component_names():
+def get_component_names()->tuple[int,list[str]]:
+
+    """This helper function doesn't require any input. It collects the number of components in the system and
+    list of the component names from the user and returns them in form of a tuple."""
+
     while True:
         try:
             CNO = int(input("How many components are in the system? "))
@@ -47,7 +59,12 @@ def get_component_names():
         componentnames.append(name)
     return CNO, componentnames
 
-def get_pressure(prompt):
+def get_pressure(prompt: str)->float:
+    
+    """This helper function takes a string prompt as an input. The prompt is displayed as a message when the function
+    asks for pressure input from the user. This function takes the input of pressure and its unit denoted as an integer
+    as an input from the user and returns value of pressure in pascals unit."""
+
     while True:
         try:
             P = float(input(prompt))
@@ -71,7 +88,12 @@ def get_pressure(prompt):
             continue
         return pressure_to_pa(P, PU)
     
-def get_compositions(componentnames, phase):
+def get_compositions(componentnames: list[str], phase:str)->list[float]:
+
+    """This helper function takes component names list and the phase state str as an input and collects compositions
+    corresponding to each component corresponding to that phase from the user and returns normalized compositions 
+    in form of a list."""
+
     while True:
         compositions = []
         for name in componentnames:
@@ -98,7 +120,11 @@ def get_compositions(componentnames, phase):
         print(f"\nError: {phase.capitalize()} compositions "f"sum to {total:.6f}.")
         print("Please re-enter all compositions.\n")
 
-def get_model(CNO, componentnames):
+def get_model(CNO: int, componentnames: list[str])->tuple[str,dict[str,Any]]:
+
+    """This helper function takes number of components and list of component names as an input and returns model name
+    as a string and a parameters dicitionary"""
+
     parameters = {}
     while True:
         try:
@@ -132,7 +158,7 @@ def get_model(CNO, componentnames):
         for i in range(CNO):
             while True:
                 try:
-                    gamma = float(input(f"Enter gamma for "f"{componentnames[i]}: "))
+                    gamma = float(input(f"Enter gamma for "f"{componentnames[i]}: ")) #input from user if they know the gamma values
                     gammas.append(gamma)
                     break
                 except ValueError:
@@ -142,7 +168,11 @@ def get_model(CNO, componentnames):
     model, parameters = Model_Selector(CNO,componentnames)
     return model, parameters
 
-def get_antoine_components(componentnames):
+def get_antoine_components(componentnames: list[str])->list[dict[str,Any]]:
+
+    """This helper function takes list of component names as an input and returns a list of components containing dictionaries
+    having values of Antoine constants, Form, temperature and pressure units for each component"""
+
     components = []
     for name in componentnames:
         while True:
@@ -189,7 +219,12 @@ def get_antoine_components(componentnames):
 
     return components
 
-def get_temperature_guess(prompt):
+def get_temperature_guess(prompt: str)->float:
+
+    """This helper function takes a string prompt as an input from the user. The prompt is displayed as a message when the 
+    function asks for temperature guess input from the user. This function takes temperature guess and its unit denoted as 
+    an integer as an input from the user and returns value of temperature guess in Kelvin unit."""
+
     while True:
         try:
             Tguess = float(input(prompt))
@@ -215,7 +250,12 @@ def get_temperature_guess(prompt):
 
         return M
     
-def get_plot_system():
+def get_plot_system()->tuple[list[dict[str,Any]],str,dict[str,Any]]:
+
+    """This helper function doesn't take any input. It calls get_component_names() defined above within itself to get 
+    number of components and component names list from the user and uses them to further call get_model() and 
+    get_antoine_components() to finally return components list, model string and parameters dictionary."""
+
     CNO, componentnames = get_component_names()
     if CNO != 2:
         print("Only binary systems are supported for plotting.")
@@ -224,17 +264,12 @@ def get_plot_system():
     components = get_antoine_components(componentnames)
     return components, model, parameters
 
-def flash_xy(result):
-    plt.figure(figsize=(8,6))
-    plt.plot(result["x"],result["y"],marker="o")
-    plt.plot([0,1],[0,1],"--",color="black")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Flash Equilibrium Point")
-    plt.grid(True)
-    plt.show()
+def get_cp(prompt: str)->float:
 
-def get_cp(prompt):
+    """This helper function takes a string prompt as an input from the user. The prompt is displayed as a message when the 
+    function asks for Cp input from the user. This function takes Cp and its unit denoted as an integer as an input from 
+    the user. It handles unit conversion as well and returns Cp value in J/mol-K units."""
+
     while True:
         try:
             Cp = float(input(prompt))
@@ -250,7 +285,12 @@ def get_cp(prompt):
         except ValueError:
             print("Please enter a valid value.")
 
-def get_hvap(prompt):
+def get_hvap(prompt: str)->float:
+
+    """This helper function takes a string prompt as an input from the user. The prompt is displayed as a message when the 
+    function asks for Hvap input from the user. This function takes Hvap and its unit denoted as an integer as an input from 
+    the user. It handles unit conversion as well and returns Hv value in J/mol units."""
+
     while True:
         try:
             Hvap = float(input(prompt))
@@ -266,7 +306,12 @@ def get_hvap(prompt):
         except ValueError:
             print("Please enter a valid value.")
 
-def get_temperature_range():
+def get_temperature_range()->tuple[float,float,float]:
+
+    """This helper function doesn't require any input. It collects the temperature unit and temperature range(Tmin,Tmax,Tstep)
+    from the user and calls to_kelvin() function to convert them into Kelvin units and returns Tmin, Tmax, Tstep in Kelvin
+    units in form of a tuple."""
+
     try:
         TU = int(input("Temperature unit:\n"
                         "1.Kelvin\n"
@@ -286,13 +331,18 @@ def get_temperature_range():
     if Tmin<=0:
         print("The value of the temperature range crosses absolute zero")
         exit()
-    if TU == 1 or TU == 2:
+    if TU == 1 or TU == 2:   #ΔC = ΔK
         Tstep = Tstep
-    elif TU == 3 or TU == 4:
+    elif TU == 3 or TU == 4: #ΔF = ΔR
         Tstep *= 5/9
     return Tmin, Tmax, Tstep
 
-def get_pressure_range():
+def get_pressure_range()->tuple[float,float,float,int]:
+
+    """This helper function doesn't require any input. It collects the pressure unit and pressure range(Pmin,Pmax,Pstep)
+    from the user and calls pressure_to_pa() function to convert them into pascals units and returns Pmin, Pmax, Pstep in
+    Kelvin units and pressure unit denoted by an integer in form of a tuple."""
+
     try:
         PU = int(input("Pressure unit:\n"
                         "1.mmHg\n"
