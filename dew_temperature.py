@@ -193,9 +193,9 @@ def Dew_Temperature(CNO: int,components: list[dict[str,Any]],vapourcompositions:
     the same dicitonary returned by the Core function but containg component data list, parameters dictionary as well 
     as problem type denoted as a string."""
 
-    """It take Number of components, list of components which contain component names, Antoine constants, 
+    """It takes Number of components, list of components which contain component names, Antoine constants, 
     liquid compositions list, System pressure in Pascals, model name as a string, parameters dictionary, Initial
-    temperature guess in Kelvin and component names list as an input. It acts as also returns a dictionary as stated above."""
+    temperature guess in Kelvin and component names list as an input. It also returns a dictionary as stated above."""
 
     if model == "Ideal":      #Initializing gamma based on the model for Core function call 
         gammas = [1.0]*CNO

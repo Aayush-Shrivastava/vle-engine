@@ -53,9 +53,9 @@ def Dew_Pressure(CNO: int,components: list[dict[str,Any]],vapourcompositions: li
     the same dicitonary returned by the Core function but containg component data list, parameters dictionary as well 
     as problem type denoted as a string."""
 
-    """It take Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based 
+    """It takes Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based 
     on the branch, vapour compositions list, list containing activity coefficient list, Temperature in Kelvin, model name
-    as a string, parameters dictionary and component names list as an input. It acts as also returns a dictionary as stated above."""
+    as a string, parameters dictionary and component names list as an input. It also returns a dictionary as stated above."""
 
     if model not in ["Ideal", "Known Gamma"]:
         gammas = [1.0] * CNO #Initialising gammas as 1 

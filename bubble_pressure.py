@@ -51,9 +51,9 @@ def Bubble_Pressure(CNO: int,components: list[dict[str,Any]],liquidcompositions:
     the same dicitonary returned by the Core function but containg component data list, parameters dictionary as well 
     as problem type denoted as a string."""
 
-    """It take Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based 
+    """It takes Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based 
     on the branch, liquid compositions list, list containing activity coefficient list, Temperature in Kelvin, model name
-    as a string, parameters dictionary and component names list as an input. It acts as also returns a dictionary as stated above."""
+    as a string, parameters dictionary and component names list as an input. It also returns a dictionary as stated above."""
     
     result = Bubble_Pressure_Core(components,liquidcompositions,gammas,Q,model)
     print("\nBubble Pressure in Different Units:\n")

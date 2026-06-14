@@ -12,9 +12,9 @@ def Bubble_Temperature_Core(components: list[dict[str,Any]],liquidcompositions: 
 
     """A helper function which does the main calculation part of Bubble Pressure calculation.It takes 
     a list of components which contain component names, Psat (Pa) along with liquid composition list, 
-    System pressure in Pascals, Initial temperature guess and model name as 
-    a string as an input and returns a dictionary containing System pressure in Pascals along with component 
-    data like name,liquid and vapour compositions,activity coefficient, Psat and Bubble temperature in all 4 units """
+    System pressure in Pascals, Initial temperature guess and model name as a string as an input and 
+    returns a dictionary containing System pressure in Pascals along with component data like name,liquid 
+    and vapour compositions,activity coefficient, Psat and Bubble temperature in all 4 units"""
 
     def bubble_point_temperature(T: float)->float:
         bubblepressure=0
@@ -133,9 +133,9 @@ def Bubble_Temperature(CNO: int,components: list[dict[str,Any]],liquidcompositio
     the same dicitonary returned by the Core function but containg component data list, parameters dictionary as well 
     as problem type denoted as a string."""
 
-    """It take Number of components, list of components which contain component names, Antoine constants, 
+    """It takes Number of components, list of components which contain component names, Antoine constants, 
     liquid compositions list, System pressure in Pascals, model name as a string, parameters dictionary, Initial
-    temperature guess in Kelvin and component names list as an input. It acts as also returns a dictionary as stated above."""
+    temperature guess in Kelvin and component names list as an input. It also returns a dictionary as stated above."""
 
     result = Bubble_Temperature_Core(components,liquidcompositions,PS_Pa,model,parameters,M)
     

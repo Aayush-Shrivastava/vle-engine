@@ -5,9 +5,17 @@ from input_helper import get_antoine_components,get_cp,get_hvap
 from antoine import from_kelvin,getvapourpressure,kelvin_to_all_units
 from bubble_pressure import Bubble_Pressure_Core
 from dew_pressure import Dew_Pressure_Core
+from typing import Any
 
-def Isothermal_Flash_Core(components,z,T,P,model,parameters):
-    x_old = z[:]
+def Isothermal_Flash_Core(components: list[dict[str,Any]],z: list[float],T: float,P: float,model: str,parameters: dict[str,Any])->dict[str,Any]:
+
+    """This is a helper fuction which deals with calculation part of isothermal flash calculations which is later called in 
+    Isothermal_Flash() and plotting functions. It takes a list of components which has a dictionary containing component 
+    names, Psat (Pa) along with overall compositions list, Flash temperature, Flash pressure, model name as a string and 
+    parameters dicitonary as an input and returns a dictionary containing calculated liquid and vapour compositions, phase
+    state, Bubble and Dew pressures vapour and liquid fractions etc."""
+
+    x_old = z[:] #Taking liquid composition initial guess same as the overall compositions.
     x_new = z[:]
     for iteration in range(100):
         if model == "Ideal":
@@ -25,23 +33,23 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
             F0 = 0.0
             F1 = 0.0
             for i in range(len(z)):
-                F0 += z[i] * (K[i] - 1)
-                F1 += z[i] * (K[i] - 1) / K[i]
+                F0 += z[i] * (K[i] - 1)         #Calculating Rachford-Rice equation at V/F=0
+                F1 += z[i] * (K[i] - 1) / K[i]  #Calculating Rachford-Rice equation at V/F=1
 
             if F0 < 0 and F1 < 0:
-                beta = 0.0
-                x = z[:]
+                beta = 0.0                      #Liquid only region
+                x = z[:]                        #Overall composition equals the liquid composition
                 y = [K[i] * x[i] for i in range(len(z))]
                 total_y = sum(y)
-                y = [yi / total_y for yi in y]
+                y = [yi / total_y for yi in y]  #Hypothetical vapour composition that would exist in equilibrium with the liquid
                 K_display = []
                 for i in range(len(z)):
-                    K_display.append(y[i] / x[i])
+                    K_display.append(y[i] / x[i]) #Fixing K to be able to display azeotropes
                 BubbleP = Bubble_Pressure_Core(components, z, gammas, T, model)
                 DewP = Dew_Pressure_Core(components, z, gammas, T, model)
                 return {"temperature_K": T, "pressure_pa": P,
                         "V_over_F": 0.0, "L_over_F": 1.0,
-                        "x": x, "y": y, "z": z, "K": K_display, "gamma": gammas,
+                        "x": x, "y-equilibrium": y, "z": z, "K": K_display, "gamma": gammas,
                         "model": model,
                         "components": [c["name"] for c in components],
                         "temperature_units": kelvin_to_all_units(T),
@@ -53,14 +61,14 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
                         "phase_state": "Liquid Only"}
 
             elif F0 > 0 and F1 > 0:
-                beta = 1.0
-                y = z[:]
+                beta = 1.0                        #Vapour only region
+                y = z[:]                          #Overall composition equals the vapour composition
                 x = [yi / K[i] for i, yi in enumerate(y)]
                 total_x = sum(x)
-                x = [xi / total_x for xi in x]
+                x = [xi / total_x for xi in x]    #Hypothetical vapour composition that would exist in equilibrium with the liquid
                 K_display = []
                 for i in range(len(z)):
-                    K_display.append(y[i] / x[i])
+                    K_display.append(y[i] / x[i]) #Fixing K to be able to display azeotropes
                 BubbleP = Bubble_Pressure_Core(components, z, gammas, T, model)
                 DewP = Dew_Pressure_Core(components, z, gammas, T, model)
                 return {"temperature_K": T, "pressure_pa": P,
@@ -78,22 +86,24 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
 
     
 
-        def Rachford_Rice(beta):
-            total = 0.0
+        def Rachford_Rice(beta: float)->float:
 
+            """Helper function to solve the Rachford-rice equation in the two-phase region.
+            It takes an initial guess for vapour fraction(V/F) and returns a value for the rachford 
+            rice equation which is then fed to Newton_Raphson_Method() function to solve for V/F."""
+
+            total = 0.0
             for i in range(len(z)):
                 total += (z[i]*(K[i]-1)/(1 + beta*(K[i]-1)))
-
             return total
-
-        beta = Newton_Raphson_Method(Rachford_Rice,0.5,1e-8,500)
+        beta = Newton_Raphson_Method(Rachford_Rice,0.5,1e-8,500) #Solving for V/F
         x_new = []
         for i in range(len(z)):
-            xi = z[i]/(1 + beta*(K[i]-1))
+            xi = z[i]/(1 + beta*(K[i]-1)) #Solving for x
             x_new.append(xi)
 
         error = max(abs(x_new[i]-x_old[i])for i in range(len(z)))
-        if error < 1e-8:
+        if error < 1e-8: #Convergence is reached when tolerance is satisfied
             break
         x_old = x_new
 
@@ -103,7 +113,7 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
         print("\nWarning:")
         print("Liquid compositions do not sum to 1.")
         print("Normalizing liquid compositions...")
-        x = [xi/total_x for xi in x]
+        x = [xi/total_x for xi in x]               #Normalizing liquid composition block
     if model == "Ideal":
         gammas = [1.0]*len(z)
 
@@ -116,12 +126,12 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
     K = []
 
     for i, component in enumerate(components):
-        Ki = gammas[i] * component["P_sat_Pa"] / P
+        Ki = gammas[i] * component["P_sat_Pa"] / P #Calculating K values
         K.append(Ki)
 
     y = []
     for i in range(len(z)):
-        yi = K[i] * x[i]
+        yi = K[i] * x[i]   #Calculating vapour commpositions using converged x values
         y.append(yi)
     
     total_y = sum(y)
@@ -129,7 +139,7 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
         print("\nWarning:")
         print("Vapour compositions do not sum to 1.")
         print("Normalizing vapour compositions...")
-        y = [yi/total_y for yi in y]
+        y = [yi/total_y for yi in y]               #Normalizing liquid composition block
 
     liquid_fraction = 1 - beta
     component_names = [component["name"]for component in components]
@@ -138,7 +148,7 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
     BubbleP=Bubble_Pressure_Core(components,z,gammas,T,model)
     DewP=Dew_Pressure_Core(components,z,gammas,T,model)
 
-    return {"temperature_K": T,
+    return {"temperature_K": T,       #Return dictionary
             "pressure_pa": P,
             "temperature_units": temperature_units,
             "pressure_units": pressure_units,
@@ -157,11 +167,20 @@ def Isothermal_Flash_Core(components,z,T,P,model,parameters):
             "components": component_names,
             "phase_state": "Two Phase"}
 
-def Isothermal_Flash(CNO,components,overall_compositions,T,P,model,parameters,componentnames):
+def Isothermal_Flash(CNO: int,components: list[dict[str,Any]],overall_compositions: list[float],T: float,P: float,model: str,parameters: dict[str,Any],componentnames: list[str])->dict[str,Any]:
+
+    """Uses the above Core function and basically acts as a printer to print the results of isothermal flash calculations.
+    It returns the same dictionary as the Core function, only adding component data list, parameters dictionary as well 
+    as problem type denoted as a string."""
+
+    """It takes Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based on the 
+    branch along with overall composition list, Flash pressure in Pascals,Flash temperature in Kelvin, model name as a string, 
+    parameters dictionary and component names list as an input. It also returns a dictionary as stated above"""
+
     if len(components) == 0:
         try:
-            pvap_known = int(input("\nDo you already know the vapour pressures "
-                                    "of all components at the system temperature?\n"
+            pvap_known = int(input("\nDo you already know the vapour pressures "     #Executed when user already has vapour
+                                    "of all components at the system temperature?\n" #pressures of the components
                                     "1.Yes\n"
                                     "2.No\n"))
             if pvap_known not in [1,2]:
@@ -256,44 +275,56 @@ def Isothermal_Flash(CNO,components,overall_compositions,T,P,model,parameters,co
     
     return result
 
-def Adiabatic_Flash_Core(components, z, Pflash, model, parameters, feed_data):
-    def Energy_Balance(T):
+def Adiabatic_Flash_Core(components: list[dict[str,Any]], z: list[float], Pflash: float, model: str, parameters: dict[str,Any], feed_data: dict[str,Any])->dict[str,Any]:
+
+    """This is a helper fuction which deals with calculation part of adiabatic flash calculations which is later called in 
+    Adiabatic_Flash() and plotting functions. It takes a list of components which has a dictionary containing component 
+    names,Flash temperature, Psat (Pa) along with overall compositions list, Flash pressure, model name as a string, parameters dicitonary 
+    and feed data dictionary containing data of Cp liquid, Cp capour and Hv as an input and returns a dictionary containing 
+    calculated liquid and vapour compositions, phase state, Bubble and Dew pressures vapour and liquid fractions etc."""
+     
+    def Energy_Balance(T: float)->float:
+
+        """A helper function which does the energy balance required in Adiabatic flash calculations.
+        It takes temperature in kelvin as an input and solves for Hfeed-Hflash which is fed to 
+        Newton_Raphson_Method() for solving (Energy balance: Hfeed=Hflash)."""
+
         if "A" in components[0]:
             for component in components:
                 T_CONV = from_kelvin(T, component["TU"])
                 P_sat = getvapourpressure(component["A"], component["B"],
                                          component["C"], T_CONV, component["FORM"])
                 component["P_sat_Pa"] = pressure_to_pa(P_sat, component["PU"])
-        flash_result = Isothermal_Flash_Core(components, z, T, Pflash, model, parameters)
-        beta = flash_result["V_over_F"]
-        x = flash_result["x"]
-        y = flash_result["y"]
+        flash_result = Isothermal_Flash_Core(components, z, T, Pflash, model, parameters) #When this function is later called,
+        beta = flash_result["V_over_F"]                                                   #it calls Isothermal_Flash_Core() and
+        x = flash_result["x"]                                                             #solves for x,y and V/F repeatedly for
+        y = flash_result["y"]                                                             #each trial temperature
         Tref = 298.15
         Hfeed = 0
         for i in range(len(z)):
-            Hfeed += z[i] * feed_data["Cp_liquid"][i] * (feed_data["feed_temperature"] - Tref)
+            Hfeed += z[i] * feed_data["Cp_liquid"][i] * (feed_data["feed_temperature"] - Tref) #Calculating Feed enthalpy
         HL = 0
         for i in range(len(x)):
-            HL += x[i] * feed_data["Cp_liquid"][i] * (T - Tref)
+            HL += x[i] * feed_data["Cp_liquid"][i] * (T - Tref) #Calculating liquid enthalpy of feed
         HV = 0
         for i in range(len(y)):
-            HV += y[i] * (feed_data["Cp_vapor"][i] * (T - Tref) + feed_data["Hvap"][i])
-        Hflash = (1 - beta) * HL + beta * HV
+            HV += y[i] * (feed_data["Cp_vapor"][i] * (T - Tref) + feed_data["Hvap"][i]) #Calculating vapour enthalpy of feed
+        Hflash = (1 - beta) * HL + beta * HV #Calculating flash enthalpy
         return Hfeed - Hflash
 
     Tfeed = feed_data["feed_temperature"]
     T_low = None
     T_high = None
-    E_prev = Energy_Balance(Tfeed)
+    E_prev = Energy_Balance(Tfeed) #Calling energy balance at feed temperature
     T_prev = Tfeed
 
     T_try = Tfeed - 0.5
     while T_try > 100:
         try:
-            E_try = Energy_Balance(T_try)
-            if E_try * E_prev < 0:
+            E_try = Energy_Balance(T_try) #Calling energy balance within this while loop
+            if E_try * E_prev < 0: #Solution region found
                 T_low  = T_try
-                T_high = T_prev  # ← correct: bracket is between consecutive points
+                T_high = T_prev  #Bracket is between consecutive points
                 break
             E_prev = E_try
             T_prev = T_try
@@ -303,35 +334,35 @@ def Adiabatic_Flash_Core(components, z, Pflash, model, parameters, feed_data):
 
     try:
         if T_low is not None:
-            Tguess = (T_low + T_high) / 2
+            Tguess = (T_low + T_high)/2 #Calulating initial guess for Newton-Raphson method
         else:
             Tguess = Tfeed - 10
-        Tflash = Newton_Raphson_Method(Energy_Balance, Tguess, 1e-8, 500)
+        Tflash = Newton_Raphson_Method(Energy_Balance, Tguess, 1e-8, 500) #Newton-Raphson attempt block
     except ValueError:
         if T_low is not None:
-            Tflash = Bisection_Method(Energy_Balance, T_low, T_high, 1e-8)
+            Tflash = Bisection_Method(Energy_Balance, T_low, T_high, 1e-8) #Bisection fallback block
         else:
             raise ValueError("Adiabatic flash did not converge. "
                            "Check Cp and Hvap values and feed temperature.")
 
-    if "A" in components[0]:
+    if "A" in components[0]:   #Updating Pisat values from converged Tflash values
         for component in components:
             T_CONV = from_kelvin(Tflash, component["TU"])
             P_sat = getvapourpressure(component["A"], component["B"],
                                      component["C"], T_CONV, component["FORM"])
             component["P_sat_Pa"] = pressure_to_pa(P_sat, component["PU"])
 
-    final_result = Isothermal_Flash_Core(components, z, Tflash, Pflash, model, parameters)
-    
-    # Calculate gammas at flash conditions
-    if model == "Ideal":
+    final_result = Isothermal_Flash_Core(components, z, Tflash, Pflash, model, parameters) #Final flash to find values of
+                                                                                           #x,y and V/F at converged
+                                                                                           #Tflash
+    if model == "Ideal":               # Calculate gammas at flash conditions
         gammas_final = [1.0] * len(z)
     elif model == "Known Gamma":
         gammas_final = parameters["gamma"]
     else:
         gammas_final = calculate_gammas(model, final_result["x"], parameters, Tflash)
 
-    BubbleP = Bubble_Pressure_Core(components, z, gammas_final, Tflash, model)
+    BubbleP = Bubble_Pressure_Core(components, z, gammas_final, Tflash, model) # Calculate bubble and dew pressures for reporting
     DewP = Dew_Pressure_Core(components, z, gammas_final, Tflash, model)
 
     return {"temperature_K": Tflash,
@@ -352,8 +383,18 @@ def Adiabatic_Flash_Core(components, z, Pflash, model, parameters, feed_data):
             "temperature_units": kelvin_to_all_units(Tflash),
             "pressure_units": pa_to_all_units(Pflash)}
 
-def Adiabatic_Flash(CNO,components,overall_compositions,feed_temperature,flash_pressure,model,parameters,componentnames):
-    if len(components) == 0:
+def Adiabatic_Flash(CNO: int,components: list[dict[str,Any]],overall_compositions: list[float],feed_temperature: float,flash_pressure: float,model: str,parameters: dict[str,Any],componentnames: list[str])->dict[str, Any]:
+    
+    """Uses the above Core function and basically acts as a printer to print the results of adiabatic flash calculations.
+    It takes Number of components, list of components which contain component names, Psat (Pa) or Antoine constants based 
+    on the branch along with overall composition list, Feed temperature in Kelvin, Flash pressure in Pascals, model name 
+    as a string, parameters dictionary and component names list as an input. It returns the same dictionary as the Core 
+    function, only adding component data list, parameters dictionary as well as problem type denoted as a string."""
+
+    """It's function is data preparation and calling the above function and prints results. It also returns the same 
+    dictionary as stated above."""
+
+    if len(components) == 0:          #Pressure gathering block
         try:
             pvap_known = int(input("\nDo you already know the vapour pressures "
                                     "of all components at the feed temperature?\n"
@@ -394,8 +435,8 @@ def Adiabatic_Flash(CNO,components,overall_compositions,feed_temperature,flash_p
             P_sat = getvapourpressure(component["A"],component["B"],component["C"],T_CONV,component["FORM"])
             component["P_sat_Pa"] = pressure_to_pa(P_sat,component["PU"])
     
-    if "Cp_liquid" not in parameters:
-        Cp_liquid = []
+    if "Cp_liquid" not in parameters:  #Gathering Cp and Hv block
+        Cp_liquid = [] 
         Cp_vapor = []
         Hvap = []
         print("\nEnter Enthalpy Data:\n")
